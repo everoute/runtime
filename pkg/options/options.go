@@ -9,6 +9,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	genericoptions "k8s.io/apiserver/pkg/server/options"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/util/flowcontrol"
 	"k8s.io/klog/v2"
@@ -18,6 +19,7 @@ import (
 type RecommendedConfig struct {
 	genericapiserver.RecommendedConfig
 
+	Clientset            kubernetes.Interface
 	LeaderElectionClient LeaderElectionClient
 	LeaderCallbacks      leaderelection.LeaderCallbacks
 }
@@ -125,7 +127,8 @@ func (o *coreAPIOptions) ApplyTo(config *RecommendedConfig) error {
 		return err
 	}
 	config.ClientConfig.RateLimiter = flowcontrol.NewTokenBucketRateLimiter(o.runtimeQPS, o.runtimeBurst)
-	return nil
+	config.Clientset, err = kubernetes.NewForConfig(config.ClientConfig)
+	return err
 }
 
 func NewAuditOptions() Options {

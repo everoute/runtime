@@ -11,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	genericapiserver "k8s.io/apiserver/pkg/server"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 )
@@ -70,7 +69,7 @@ func (o *electionOptions) ApplyTo(config *RecommendedConfig) error {
 	lec := &leaderelection.LeaderElectionConfig{
 		Lock: &resourcelock.LeaseLock{
 			LeaseMeta:  metav1.ObjectMeta{Name: o.Name, Namespace: o.Namespace},
-			Client:     kubernetes.NewForConfigOrDie(config.ClientConfig).CoordinationV1(),
+			Client:     config.Clientset.CoordinationV1(),
 			LockConfig: resourcelock.ResourceLockConfig{Identity: o.NodeIdentity},
 		},
 		LeaseDuration:   o.LeaseDuration,

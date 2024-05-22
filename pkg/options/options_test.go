@@ -53,6 +53,7 @@ func TestNewRecommendedOptions(t *testing.T) {
 		Expect(s.ClientConfig.Host).Should(Equal("https://127.0.0.1"))
 		Expect(s.ClientConfig.RateLimiter).ShouldNot(BeNil())
 		Expect(s.ClientConfig.RateLimiter.QPS()).Should(Equal(float32(1000)))
+		Expect(s.Clientset).ShouldNot(BeNil())
 	})
 
 	t.Run("should set secure serving options", func(t *testing.T) {
