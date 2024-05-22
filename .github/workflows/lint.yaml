@@ -1,0 +1,45 @@
+name: lint
+on: [pull_request]
+
+jobs:
+  golint:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: setup golang from container image
+        run: |
+          rm -rf /usr/local/go
+          docker run --rm -v /usr/local:/sys_usr_local golang:1.20 cp -r /usr/local/go /sys_usr_local/
+          echo "PATH=/usr/local/go/bin:${PATH}" >> $GITHUB_ENV
+
+      - uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.56
+          skip-pkg-cache: true
+          skip-build-cache: true # skip cache because of flaky behaviors
+
+  generate-check:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: make docker-generate
+        run: sudo make docker-generate
+
+      - name: check if code changes
+        run: sudo sh -c "git add -A && git diff HEAD --exit-code"
+
+      - name: show message if failed
+        if: ${{ failure() }}
+        run: echo "::error::Please run \"make generate\" or \"make docker-generate\" before commit."
+
+  commitlint:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: wagoid/commitlint-github-action@v4
+        with:
+          configFile: .commitlintrc.json
