@@ -58,6 +58,8 @@ func TestNewRecommendedOptions(t *testing.T) {
 
 	t.Run("should set secure serving options", func(t *testing.T) {
 		Expect(s.SecureServing).ShouldNot(BeNil())
+		Expect(s.PublicAddress).ShouldNot(BeNil())
+		Expect(s.PublicAddress.String()).ShouldNot(BeEmpty())
 		Expect(s.SecureServing.MinTLSVersion).Should(Equal(uint16(tls.VersionTLS12)))
 		Expect(s.SecureServing.HTTP2MaxStreamsPerConnection).Should(Equal(1000))
 	})

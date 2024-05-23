@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/samber/lo"
 	"github.com/spf13/pflag"
+	utilnet "k8s.io/apimachinery/pkg/util/net"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/dynamiccertificates"
 )
@@ -54,6 +55,14 @@ func (o *secureServingOptions) ApplyTo(config *RecommendedConfig) error {
 	tcpListener, err := net.ListenTCP("tcp", &net.TCPAddr{IP: o.BindIP, Port: o.BindPort})
 	if err != nil {
 		return err
+	}
+
+	if o.AdvertiseIP == nil || o.AdvertiseIP.IsUnspecified() {
+		hostIP, err := utilnet.ResolveBindAddress(o.BindIP)
+		if err != nil {
+			return fmt.Errorf("unable to find suitable advertise IP: %w", err)
+		}
+		o.AdvertiseIP = hostIP
 	}
 
 	config.SecureServing = &genericapiserver.SecureServingInfo{
