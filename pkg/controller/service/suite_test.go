@@ -46,9 +46,9 @@ var _ = BeforeSuite(func() {
 		serviceNamespaceName02.String(),
 	)
 
-	go f.Start(stopCh)
 	go serviceController.Run(stopCh)
 
+	f.Start(stopCh)
 	f.WaitForCacheSync(stopCh)
 })
 
