@@ -92,6 +92,9 @@ func (c *Controller) Run(stopCh <-chan struct{}) {
 	go wait.UntilWithContext(ctx, c.reconcileWorker, time.Second)
 	go wait.UntilWithContext(ctx, c.electionNotifier, time.Second)
 
+	// note: quick sync when service controller started
+	// make sure we reconcile even if the first election event lost
+	c.reconcileQueue.Add(types.NamespacedName{})
 	<-stopCh
 }
 

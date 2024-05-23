@@ -65,7 +65,7 @@ var _ = Describe("Service Reconcile", func() {
 
 			It("should not update external name on include service", func() {
 				Eventually(func() string {
-					_, err := clientset.CoreV1().Services(service01.Namespace).Patch(ctx, service01.Name, types.JSONPatchType, []byte(`[{"op":"remove","path":"/spec/externalName"}]`), metav1.PatchOptions{})
+					err := patchExternalService(ctx, serviceNamespaceName01, []byte(`[{"op":"remove","path":"/spec/externalName"}]`))
 					Expect(err).ShouldNot(HaveOccurred())
 					time.Sleep(500 * time.Millisecond) // wait for reconcile
 					service, err := clientset.CoreV1().Services(service01.Namespace).Get(ctx, service01.Name, metav1.GetOptions{})
@@ -116,5 +116,11 @@ func createExternalService(ctx context.Context, namespacedName types.NamespacedN
 	service.SetNamespace(namespacedName.Namespace)
 	service.SetName(namespacedName.Name)
 	service.Spec.Type = corev1.ServiceTypeExternalName
+	service.Spec.ExternalName = "127.0.0.1"
 	return clientset.CoreV1().Services(service.Namespace).Create(ctx, service, metav1.CreateOptions{})
+}
+
+func patchExternalService(ctx context.Context, namespacedName types.NamespacedName, data []byte) error {
+	_, err := clientset.CoreV1().Services(namespacedName.Namespace).Patch(ctx, namespacedName.Name, types.JSONPatchType, data, metav1.PatchOptions{})
+	return err
 }
