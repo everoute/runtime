@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/authorization/authorizerfactory"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	genericoptions "k8s.io/apiserver/pkg/server/options"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
@@ -26,8 +27,10 @@ type RecommendedConfig struct {
 
 // NewRecommendedConfig returns a RecommendedConfig struct with the default values
 func NewRecommendedConfig(codecs serializer.CodecFactory) *RecommendedConfig {
+	config := genericapiserver.NewRecommendedConfig(codecs)
+	config.Authorization.Authorizer = authorizerfactory.NewAlwaysAllowAuthorizer()
 	return &RecommendedConfig{
-		RecommendedConfig: *genericapiserver.NewRecommendedConfig(codecs),
+		RecommendedConfig: *config,
 		LeaderCallbacks:   leaderelection.LeaderCallbacks{},
 	}
 }
