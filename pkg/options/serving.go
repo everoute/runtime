@@ -85,5 +85,9 @@ func (o *secureServingOptions) ApplyTo(config *RecommendedConfig) error {
 		return err
 	}
 	config.LoopbackClientConfig, err = config.SecureServing.NewLoopbackClientConfig(uuid.New().String(), lo.Must(os.ReadFile(o.CACrtPath)))
-	return err
+	if err != nil {
+		return err
+	}
+	config.LoopbackClientConfig.TLSClientConfig.ServerName = "127.0.0.1"
+	return nil
 }
