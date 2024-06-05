@@ -44,6 +44,22 @@ type GenericOptions[T any] interface {
 	ApplyTo(config T) error
 }
 
+func ConvertOptions[T, R any](options GenericOptions[T], convert func(R) T) GenericOptions[R] {
+	return convertOptions[T, R]{
+		GenericOptions: options,
+		convert:        convert,
+	}
+}
+
+type convertOptions[T, R any] struct {
+	GenericOptions[T]
+	convert func(R) T
+}
+
+func (o convertOptions[T, R]) ApplyTo(config R) error {
+	return o.GenericOptions.ApplyTo(o.convert(config))
+}
+
 func NewRecommendedOptions(prefix string, codec runtime.Codec) Options {
 	return NewMultipleOptions[*RecommendedConfig](
 		NewKLogOptions[*RecommendedConfig](),
@@ -137,29 +153,17 @@ func (o *coreAPIOptions) ApplyTo(config *RecommendedConfig) error {
 }
 
 func NewAuditOptions() Options {
-	return &auditOptions{AuditOptions: *genericoptions.NewAuditOptions()}
-}
-
-type auditOptions struct {
-	genericoptions.AuditOptions
-}
-
-func (o *auditOptions) ApplyTo(config *RecommendedConfig) error {
-	return o.AuditOptions.ApplyTo(&config.Config)
+	opts := genericoptions.NewAuditOptions()
+	return ConvertOptions[*genericapiserver.Config, *RecommendedConfig](opts, func(config *RecommendedConfig) *genericapiserver.Config {
+		return &config.Config
+	})
 }
 
 func NewFeatureOptions() Options {
-	return &featureOptions{
-		FeatureOptions: *genericoptions.NewFeatureOptions(),
-	}
-}
-
-type featureOptions struct {
-	genericoptions.FeatureOptions
-}
-
-func (o *featureOptions) ApplyTo(config *RecommendedConfig) error {
-	return o.FeatureOptions.ApplyTo(&config.Config)
+	opts := genericoptions.NewFeatureOptions()
+	return ConvertOptions[*genericapiserver.Config, *RecommendedConfig](opts, func(config *RecommendedConfig) *genericapiserver.Config {
+		return &config.Config
+	})
 }
 
 func NewEtcdOptions(config *storagebackend.Config) Options {
