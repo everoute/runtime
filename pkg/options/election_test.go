@@ -24,7 +24,7 @@ func TestNewElectionOptions(t *testing.T) {
 	tmpPath := PrepareRunServerENV()
 	defer func() { Expect(os.RemoveAll(tmpPath)).ShouldNot(HaveOccurred()) }()
 
-	opts := options.NewMultipleOptions(options.NewCoreAPIOptions(), options.NewElectionOptions())
+	opts := options.NewMultipleOptions[*options.RecommendedConfig](options.NewCoreAPIOptions(), options.NewElectionOptions())
 	fs := pflag.NewFlagSet("", pflag.ContinueOnError)
 	opts.AddFlags(fs)
 	s := options.NewRecommendedConfig(scheme.Codecs)

@@ -36,15 +36,17 @@ func NewRecommendedConfig(codecs serializer.CodecFactory) *RecommendedConfig {
 }
 
 // Options contains the options for running an API server
-type Options interface {
+type Options GenericOptions[*RecommendedConfig]
+
+type GenericOptions[T any] interface {
 	AddFlags(flagSet *pflag.FlagSet)
 	Validate() []error
-	ApplyTo(config *RecommendedConfig) error
+	ApplyTo(config T) error
 }
 
 func NewRecommendedOptions(prefix string, codec runtime.Codec) Options {
-	return NewMultipleOptions(
-		NewKLogOptions(),
+	return NewMultipleOptions[*RecommendedConfig](
+		NewKLogOptions[*RecommendedConfig](),
 		NewCoreAPIOptions(),
 		NewAuditOptions(),
 		NewSecureServingOptions(),
@@ -55,21 +57,21 @@ func NewRecommendedOptions(prefix string, codec runtime.Codec) Options {
 	)
 }
 
-func NewMultipleOptions(opts ...Options) Options {
-	return &multipleOptions{options: opts}
+func NewMultipleOptions[T any](opts ...GenericOptions[T]) GenericOptions[T] {
+	return &multipleOptions[T]{options: opts}
 }
 
-type multipleOptions struct {
-	options []Options
+type multipleOptions[T any] struct {
+	options []GenericOptions[T]
 }
 
-func (o *multipleOptions) AddFlags(flagSet *pflag.FlagSet) {
+func (o *multipleOptions[T]) AddFlags(flagSet *pflag.FlagSet) {
 	for _, o := range o.options {
 		o.AddFlags(flagSet)
 	}
 }
 
-func (o *multipleOptions) Validate() []error {
+func (o *multipleOptions[T]) Validate() []error {
 	var errs []error
 	for _, o := range o.options {
 		errs = append(errs, o.Validate()...)
@@ -77,7 +79,7 @@ func (o *multipleOptions) Validate() []error {
 	return errs
 }
 
-func (o *multipleOptions) ApplyTo(config *RecommendedConfig) error {
+func (o *multipleOptions[T]) ApplyTo(config T) error {
 	for _, o := range o.options {
 		if err := o.ApplyTo(config); err != nil {
 			return err
@@ -86,16 +88,16 @@ func (o *multipleOptions) ApplyTo(config *RecommendedConfig) error {
 	return nil
 }
 
-func NewKLogOptions() Options {
-	return &klogOptions{}
+func NewKLogOptions[T any]() GenericOptions[T] {
+	return &klogOptions[T]{}
 }
 
-type klogOptions struct{}
+type klogOptions[T any] struct{}
 
-func (o *klogOptions) Validate() []error                { return nil }
-func (o *klogOptions) ApplyTo(*RecommendedConfig) error { return nil }
+func (o *klogOptions[T]) Validate() []error { return nil }
+func (o *klogOptions[T]) ApplyTo(T) error   { return nil }
 
-func (o *klogOptions) AddFlags(flagSet *pflag.FlagSet) {
+func (o *klogOptions[T]) AddFlags(flagSet *pflag.FlagSet) {
 	var allFlagSet flag.FlagSet
 	klog.InitFlags(&allFlagSet)
 	allFlagSet.VisitAll(func(f *flag.Flag) {
